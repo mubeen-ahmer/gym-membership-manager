@@ -114,6 +114,38 @@ export function useAttendance() {
         }
         throw error;
       }
+      // Auto-generate overdue month entry if needed
+      if (isOverdue) {
+        try {
+          const monthRef = targetDate.slice(0, 7);
+          const { data: latestSub } = await supabase
+            .from('subscriptions')
+            .select('subscription_id')
+            .eq('member_id', memberId)
+            .is('deleted_at', null)
+            .order('end_date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (latestSub) {
+            const { data: existing } = await supabase
+              .from('membership_months')
+              .select('id')
+              .eq('member_id', memberId)
+              .eq('month_reference', monthRef)
+              .limit(1);
+            if (!existing?.length) {
+              await supabase.from('membership_months').insert({
+                id: uuidv4(),
+                member_id: memberId,
+                subscription_id: latestSub.subscription_id,
+                month_reference: monthRef,
+                paid_status: 'unpaid',
+                created_at: now,
+              });
+            }
+          }
+        } catch (e) { console.warn('autoGenerateOverdueMonth error:', e); }
+      }
       return data;
     } else {
       await putRecord(STORES.attendance, record);

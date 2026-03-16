@@ -195,6 +195,27 @@ export function useSubscriptions() {
     return updated;
   }, [isOnline]);
 
+  const dismissMembershipMonths = useCallback(async (monthIds) => {
+    if (!monthIds?.length) return 0;
+    if (isOnline) {
+      const { error } = await supabase.from('membership_months').update({ paid_status: 'refunded' }).in('id', monthIds);
+      if (error) throw error;
+      return monthIds.length;
+    }
+    const all = await getAll(STORES.membership_months);
+    const idSet = new Set(monthIds);
+    let updated = 0;
+    for (const row of all) {
+      if (idSet.has(row.id)) {
+        const next = { ...row, paid_status: 'refunded' };
+        await putRecord(STORES.membership_months, next);
+        await addToSyncQueue('update', 'membership_months', next);
+        updated++;
+      }
+    }
+    return updated;
+  }, [isOnline]);
+
   return {
     subscriptions,
     loading,
@@ -204,5 +225,6 @@ export function useSubscriptions() {
     addSubscription,
     fetchMembershipMonths,
     markMembershipMonthsPaid,
+    dismissMembershipMonths,
   };
 }

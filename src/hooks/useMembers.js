@@ -172,10 +172,23 @@ export function useMembers() {
     }
   }, [isOnline, log]);
 
+  const fetchMember = useCallback(async (memberId) => {
+    try {
+      if (isOnline) {
+        const { data, error } = await supabase.from('members').select('*').eq('member_id', memberId).single();
+        if (error) throw error;
+        return data;
+      } else {
+        return await getByKey(STORES.members, memberId);
+      }
+    } catch { return null; }
+  }, [isOnline]);
+
   return {
     members,
     loading,
     fetchMembers,
+    fetchMember,
     searchMembers,
     addMember,
     updateMember,

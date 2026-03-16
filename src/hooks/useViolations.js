@@ -81,5 +81,14 @@ export function useViolations() {
     return local.length;
   }, [isOnline]);
 
-  return { violations, loading, fetchViolations, addViolation, resolveViolations };
+  const dismissViolation = useCallback(async (violationId) => {
+    if (isOnline) {
+      const { error } = await supabase.from('membership_violations').delete().eq('violation_id', violationId);
+      if (error) throw error;
+    } else {
+      await deleteRecord(STORES.membership_violations, violationId);
+    }
+  }, [isOnline]);
+
+  return { violations, loading, fetchViolations, addViolation, resolveViolations, dismissViolation };
 }

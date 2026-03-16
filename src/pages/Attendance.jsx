@@ -6,6 +6,7 @@ import { today, daysBetween, formatDate } from '../utils/helpers';
 import {
   IconBarcode, IconCheckCircle, IconWarning, IconChevronLeft, IconChevronRight, IconSearch,
 } from '../components/Icons';
+import MemberDetailPanel from '../components/MemberDetailPanel';
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -28,6 +29,7 @@ export default function Attendance() {
   const [marking, setMarking] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [scannerActive, setScannerActive] = useState(true);
+  const [panelMemberId, setPanelMemberId] = useState(null);
   const scanBufferRef = useRef('');
   const scanResetRef = useRef(null);
 
@@ -319,8 +321,13 @@ export default function Attendance() {
                   return (
                     <tr key={member.member_id} className="group hover:bg-[#262a3a]/30">
                       <td className="sticky left-0 z-10 bg-[#1e2130] group-hover:bg-[#262a3a] px-3 py-1.5 border-b border-r border-[#2d3148] transition-colors">
-                        <p className="text-sm font-medium text-white truncate max-w-[160px]">{member.name}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{member.member_id}</p>
+                        <button
+                          onClick={() => setPanelMemberId(member.member_id)}
+                          className="text-left w-full"
+                        >
+                          <p className="text-sm font-medium text-white truncate max-w-[160px] hover:text-indigo-300 transition">{member.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{member.member_id}</p>
+                        </button>
                       </td>
                       {dayColumns.map((col) => {
                         const key = `${member.member_id}|${col.dateStr}`;
@@ -376,6 +383,12 @@ export default function Attendance() {
           </div>
         )}
       </div>
+      {panelMemberId && (
+        <MemberDetailPanel
+          memberId={panelMemberId}
+          onClose={() => setPanelMemberId(null)}
+        />
+      )}
     </div>
   );
 }

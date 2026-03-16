@@ -249,39 +249,21 @@ export default function BarcodeCard({ member }) {
     setExporting(true);
     try {
       const canvas = await getCanvas();
-      // Try Web Share API first (works on mobile / modern browsers)
-      if (navigator.canShare) {
-        canvas.toBlob(async (blob) => {
-          const file = new File([blob], `${member.member_id}-card.png`, { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({ files: [file], title: `${member.name} – Gym Card` });
-              setExporting(false);
-              return;
-            } catch (e) { /* user cancelled or unsupported */ }
-          }
-          // Fallback: download + open WhatsApp
-          const link = document.createElement('a');
-          link.download = `${member.member_id}-card.png`;
-          link.href = URL.createObjectURL(blob);
-          link.click();
-          setTimeout(() => {
-            window.open(`https://wa.me/?text=${encodeURIComponent(`Gym Membership Card for ${member.name} (${member.member_id}). Please find the card image shared.`)}`, '_blank');
-          }, 800);
-          setExporting(false);
-        }, 'image/png');
-      } else {
-        // Desktop fallback: download the image, then open WhatsApp Web
-        const link = document.createElement('a');
-        link.download = `${member.member_id}-card.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        setTimeout(() => {
-          window.open(`https://wa.me/?text=${encodeURIComponent(`Gym Membership Card for ${member.name} | ID: ${member.member_id}`)}`, '_blank');
-        }, 800);
-        setExporting(false);
-      }
+      // Step 1: download the card image
+      const link = document.createElement('a');
+      link.download = `${member.member_id}-card.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      // Step 2: open WhatsApp directly to the member's number (skips share sheet)
+      const rawPhone = (member.phone_number || '').replace(/^\+/, '');
+      const waText = encodeURIComponent(`Here is your Gym Membership Card 🏋️\nName: ${member.name}\nID: ${member.member_id}\n\n(Please attach the downloaded card image)`);
+      const waUrl = rawPhone
+        ? `https://wa.me/${rawPhone}?text=${waText}`
+        : `https://wa.me/?text=${waText}`;
+      setTimeout(() => window.open(waUrl, '_blank'), 600);
     } catch {
+      // ignore
+    } finally {
       setExporting(false);
     }
   };
