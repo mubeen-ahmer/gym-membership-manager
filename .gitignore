@@ -12,7 +12,7 @@ pnpm-debug.log*
 
 # Environment
 .env
-.env.*
+
 
 # IDE/editor
 .vscode/
